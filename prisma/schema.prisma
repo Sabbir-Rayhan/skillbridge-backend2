@@ -1,0 +1,161 @@
+
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+
+model User {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+
+  role          UserRole     @default(student)
+  status        UserStatus   @default(active)
+  
+
+  sessions      Session[]
+  accounts      Account[]
+  
+
+  tutorProfile  TutorProfile?
+  bookings      Booking[]     @relation("StudentBookings") 
+  reviews       Review[]      @relation("StudentReviews")  
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime
+  updatedAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  password     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+// ================= SKILLBRIDGE MODELS =================
+
+enum UserRole {
+  student
+  tutor
+  admin
+}
+
+model TutorProfile {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  bio          String?
+  hourlyRate   Int
+  experience   Int       
+ 
+  availability String?
+  
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories   Category[] 
+  bookings     Booking[]  @relation("TutorBookings")
+  reviews      Review[]   @relation("TutorReviews")
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("tutor_profiles")
+}
+
+model Category {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  tutors    TutorProfile[]
+  
+  @@map("categories")
+}
+
+model Booking {
+  id        String        @id @default(cuid())
+  studentId String
+  tutorId   String
+  startTime DateTime
+  endTime   DateTime
+  status    BookingStatus @default(pending)
+  
+  student   User          @relation("StudentBookings", fields: [studentId], references: [id])
+  tutor     TutorProfile  @relation("TutorBookings", fields: [tutorId], references: [id])
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum UserStatus {
+  active
+  blocked
+}
+
+model Review {
+  id        String       @id @default(cuid())
+  rating    Int          // 1-5
+  comment   String
+  studentId String
+  tutorId   String
+  
+  student   User         @relation("StudentReviews", fields: [studentId], references: [id])
+  tutor     TutorProfile @relation("TutorReviews", fields: [tutorId], references: [id])
+  
+  createdAt DateTime     @default(now())
+
+  @@map("reviews")
+}

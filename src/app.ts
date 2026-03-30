@@ -8,9 +8,12 @@ import mainRouter from './routes';
 const app: Application = express();
 
 app.use(cors({
-    origin: process.env.APP_URL || "http://localhost:3000",
-    credentials: true
-}))
+  origin: [
+    'http://localhost:3000',
+    process.env.FRONTEND_URL as string,
+  ],
+  credentials: true,
+}));
 
 app.use(express.json());
 

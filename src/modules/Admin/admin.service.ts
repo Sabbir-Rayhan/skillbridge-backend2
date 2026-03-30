@@ -1,5 +1,6 @@
+import { UserStatus } from "../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
-import { UserStatus } from "../../../generated/prisma/enums";
+
 
 const getAllUsers = async () => {
   return await prisma.user.findMany({
